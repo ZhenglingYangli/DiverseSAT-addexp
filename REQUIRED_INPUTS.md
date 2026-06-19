@@ -10,6 +10,11 @@ Included in this directory:
 - CNF benchmarks: `new-exps/benchmarks/*.cnf`
 - Instance list: `new-exps/instances/289_instances.txt`
 
+When this package is obtained from GitHub, the CNF benchmarks are tracked with
+Git LFS. Install Git LFS before cloning, or run `git lfs pull` inside the
+repository before running the preflight script. The preflight script rejects
+Git LFS pointer files, so it will catch an incomplete clone.
+
 The default benchmark location is `new-exps/benchmarks`. Override it only if you
 want to use an external benchmark directory:
 
@@ -62,7 +67,8 @@ The generated scripts assume:
 - `sbatch` is available.
 - one CPU per task.
 - memory requests: 120 GB for transforms/CPLEX, 64 GB for MaxSAT, 32 GB for baseline.
-- time limit: 8 hours per configuration script; individual solver timeout is 7200s.
+- SLURM walltime: 3 hours per array task by default.
+- individual solver timeout: 7200s.
 
 ## Pre-Submit Checks
 

@@ -6,7 +6,19 @@ Only copy this directory:
 tar czf new-exps.tar.gz new-exps
 ```
 
-On the new server:
+If using GitHub, clone with Git LFS enabled:
+
+```bash
+git lfs install
+git clone git@github.com:ZhenglingYangli/DiverseSAT-addexp.git
+cd DiverseSAT-addexp
+git lfs pull
+python3 -m pip install -r requirements.txt
+./server_preflight.sh
+```
+
+If using an archive instead, make the archive after LFS files have been pulled
+into the working tree. On the new server:
 
 ```bash
 tar xzf new-exps.tar.gz
@@ -19,7 +31,7 @@ python3 -m pip install -r requirements.txt
 
 - all experiment Python code
 - SLURM generator and generated staged submit scripts
-- 289 benchmark CNF files in `benchmarks/`
+- 289 benchmark CNF files in `benchmarks/` (Git LFS when distributed through GitHub)
 - 289-instance manifest in `instances/289_instances.txt`
 - baseline scripts using PySAT `Cadical195` and RC2
 - local self tests

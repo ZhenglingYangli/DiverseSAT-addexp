@@ -32,7 +32,10 @@ encoding level instead of only re-summarizing old logs.
 ## Quick Start
 
 ```bash
-cd /path/to/DiverseSAT_QiKan/new-exps
+git lfs install
+git clone git@github.com:ZhenglingYangli/DiverseSAT-addexp.git
+cd DiverseSAT-addexp
+git lfs pull
 
 # local smoke tests and self-contained data check
 ./server_preflight.sh
@@ -61,8 +64,11 @@ cd ..
 
 ## Notes
 
-The 289 CNF benchmark files are copied into `benchmarks/`, so a fresh server
-only needs this `new-exps/` directory plus solver installations/licenses.
+The 289 CNF benchmark files are stored under `benchmarks/` and tracked with
+Git LFS because the largest instance exceeds GitHub's regular file-size limit.
+On a fresh server, install Git LFS before cloning or run `git lfs pull` after
+cloning. Once LFS files are present, the server only needs this repository plus
+solver installations/licenses.
 
 XOR/GaussMaxHS is not part of this clean main rerun matrix. The previous XOR
 experiment can remain a historical negative exploration. If XOR is needed as a
