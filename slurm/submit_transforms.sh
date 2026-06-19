@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+cd "$SCRIPT_DIR"
+sbatch transform-SEv1-k2-OH.sh
+sbatch transform-SEv1-k2-UNA.sh
+sbatch transform-SEv1-k2-BIN.sh
+sbatch transform-SEv1-k3-OH.sh
+sbatch transform-SEv1-k3-UNA.sh
+sbatch transform-SEv1-k3-BIN.sh
+sbatch transform-SEv1-k4-OH.sh
+sbatch transform-SEv1-k4-UNA.sh
+sbatch transform-SEv1-k4-BIN.sh
+sbatch transform-SEv1-k5-OH.sh
+sbatch transform-SEv1-k5-UNA.sh
+sbatch transform-SEv1-k5-BIN.sh
+sbatch transform-SEv1-k10-OH.sh
+sbatch transform-SEv1-k10-UNA.sh
+sbatch transform-SEv1-k10-BIN.sh
+sbatch transform-SEv3-k2-OH.sh
+sbatch transform-SEv3-k2-UNA.sh
+sbatch transform-SEv3-k2-BIN.sh
+sbatch transform-SEv3-k3-OH.sh
+sbatch transform-SEv3-k3-UNA.sh
+sbatch transform-SEv3-k3-BIN.sh
+sbatch transform-SEv3-k4-OH.sh
+sbatch transform-SEv3-k4-UNA.sh
+sbatch transform-SEv3-k4-BIN.sh
+sbatch transform-SEv3-k5-OH.sh
+sbatch transform-SEv3-k5-UNA.sh
+sbatch transform-SEv3-k5-BIN.sh
+sbatch transform-SEv3-k10-OH.sh
+sbatch transform-SEv3-k10-UNA.sh
+sbatch transform-SEv3-k10-BIN.sh

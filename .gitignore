@@ -1,0 +1,28 @@
+# Generated experiment outputs
+/results/
+/sumup/results/
+/benchmarks/k_*/
+
+# SLURM runtime logs
+/slurm/slurm-*.out
+/slurm/slurm-*.err
+slurm-*.out
+slurm-*.err
+
+# Local smoke-test artifacts
+/tests/tiny_bench/
+/tests/tiny_out/
+/tests/tiny_results/
+/tests/tiny_sumup/
+/tests/tiny_sumup2/
+/tests/tiny_instances.txt
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local archives
+*.tar.gz
+*.zip
+
