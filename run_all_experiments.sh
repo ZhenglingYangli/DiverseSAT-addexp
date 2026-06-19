@@ -19,14 +19,21 @@ prepare() {
 from pathlib import Path
 required = [
     "common/config.py",
+    "common/dimacs.py",
     "common/se_constraints.py",
-    "transformers/cnf_to_wcnf.py",
-    "cplex/cplex_diversesat.py",
-    "baseline/cadical_enumerate.py",
-    "baseline/cadical_greedy.py",
+    "common/solver_runner.py",
+    "common/sumup_common.py",
+    "transform/transformers/cnf_to_wcnf.py",
     "transform/run_transformer.py",
-    "jobs/run_solver.py",
-    "sumup/sumup_results.py",
+    "cplex/solvers/cplex_diversesat.py",
+    "cplex/jobs/run_solver.py",
+    "cash/jobs/run_solver.py",
+    "maxhs/jobs/run_solver.py",
+    "wmaxcdcl/jobs/run_solver.py",
+    "cadical/solvers/cadical_enumerate.py",
+    "cadical/jobs/run_solver.py",
+    "cadical_greedy/solvers/cadical_greedy.py",
+    "cadical_greedy/jobs/run_solver.py",
     "generate_slurm.py",
     "instances/289_instances.txt",
 ]
@@ -59,12 +66,14 @@ generate() {
 
 submit() {
   step "submit slurm"
-  (cd slurm && bash submit_all.sh)
+  bash submit_all.sh
 }
 
 sumup() {
   step "sumup"
-  python3 sumup/sumup_results.py --results-dir results --out-dir sumup/results --bench-dir benchmarks
+  for solver in cplex cash maxhs wmaxcdcl cadical cadical_greedy; do
+    python3 "$solver/sumup/sumup.py"
+  done
 }
 
 summary() {
@@ -83,6 +92,10 @@ Expected SLURM scripts:
   MaxSAT:   3 solvers * 2 SE modes * 5 k * 3 encodings = 90 array scripts
   Baseline: 2 solvers * 5 k = 10 array scripts
   Total:    170 array scripts, each with 289 tasks
+
+Solver-oriented layout:
+  Transform jobs: transform/jobs; WCNF files: transform/results/k_<K>-<ENC>-<SE>/
+  Solver jobs/results: cplex/, cash/, maxhs/, wmaxcdcl/, cadical/, cadical_greedy/
 EOF
 }
 

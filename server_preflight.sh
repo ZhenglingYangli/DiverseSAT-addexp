@@ -46,14 +46,21 @@ section "1. Basic Directory Layout"
 echo "ROOT=$ROOT"
 for path in \
   common/config.py \
+  common/dimacs.py \
   common/se_constraints.py \
-  transformers/cnf_to_wcnf.py \
-  cplex/cplex_diversesat.py \
-  baseline/cadical_enumerate.py \
-  baseline/cadical_greedy.py \
+  common/solver_runner.py \
+  common/sumup_common.py \
+  transform/transformers/cnf_to_wcnf.py \
+  cplex/solvers/cplex_diversesat.py \
+  cplex/jobs/run_solver.py \
+  cash/jobs/run_solver.py \
+  maxhs/jobs/run_solver.py \
+  wmaxcdcl/jobs/run_solver.py \
+  cadical/solvers/cadical_enumerate.py \
+  cadical/jobs/run_solver.py \
+  cadical_greedy/solvers/cadical_greedy.py \
+  cadical_greedy/jobs/run_solver.py \
   transform/run_transformer.py \
-  jobs/run_solver.py \
-  sumup/sumup_results.py \
   check_server_ready.py \
   generate_slurm.py \
   run_all_experiments.sh \
@@ -174,34 +181,61 @@ else
 fi
 
 section "8. Generated Script Sanity"
-sh_count=$(find slurm -maxdepth 1 -name '*.sh' | wc -l)
-job_count=$(find slurm -maxdepth 1 \( -name 'transform-*.sh' -o -name 'solve-*.sh' -o -name 'baseline-*.sh' \) | wc -l)
-echo "shell_files=$sh_count"
-echo "job_scripts=$job_count"
-[[ "$sh_count" -eq 174 ]] || fail "expected 174 shell files, got $sh_count"
-[[ "$job_count" -eq 170 ]] || fail "expected 170 array job scripts, got $job_count"
+python3 - <<'PY' || exit_code=$?
+from pathlib import Path
+roots = [
+    Path("transform/jobs"),
+    Path("cplex/jobs"),
+    Path("cash/jobs"),
+    Path("maxhs/jobs"),
+    Path("wmaxcdcl/jobs"),
+    Path("cadical/jobs"),
+    Path("cadical_greedy/jobs"),
+]
+job_scripts = []
+shell_files = []
+for root in roots:
+    shell_files.extend(root.glob("*.sh"))
+    job_scripts.extend(
+        p for p in root.glob("*.sh")
+        if p.name.startswith(("transform-", "solve-", "baseline-"))
+    )
+print(f"generated_shell_files={len(shell_files)}")
+print(f"generated_array_job_scripts={len(job_scripts)}")
+if len(job_scripts) != 170:
+    raise SystemExit(f"expected 170 array job scripts, got {len(job_scripts)}")
+PY
+if [[ "${exit_code:-0}" != 0 ]]; then
+  fail "generated script count check failed"
+else
+  ok "generated 170 array job scripts in solver-oriented directories"
+fi
+unset exit_code
 
 for required_script in \
-  slurm/solve-CPLEX-SEv1-k2-QP.sh \
-  slurm/solve-CPLEX-SEv3-k10-QP.sh \
-  slurm/submit_transforms.sh \
-  slurm/submit_solves.sh \
-  slurm/submit_baselines.sh \
-  slurm/submit_all.sh
+  cplex/jobs/solve-CPLEX-SEv1-k2-QP.sh \
+  cplex/jobs/solve-CPLEX-SEv3-k10-QP.sh \
+  transform/jobs/submit_transforms.sh \
+  cplex/jobs/submit_solves.sh \
+  cadical/jobs/submit_baselines.sh \
+  submit_transforms.sh \
+  submit_solves.sh \
+  submit_baselines.sh \
+  submit_all.sh
 do
   check_file "$required_script"
 done
 
-if grep -R "/users/scherif/ComputeSpace/DiverseSAT/benchmarks" slurm >/dev/null 2>&1; then
+if grep -R "/users/scherif/ComputeSpace/DiverseSAT/benchmarks" transform/jobs cplex/jobs cash/jobs maxhs/jobs wmaxcdcl/jobs cadical/jobs cadical_greedy/jobs >/dev/null 2>&1; then
   fail "generated SLURM scripts still contain old external benchmark path"
 else
   ok "generated SLURM scripts use local benchmark defaults"
 fi
 
-if grep -R "\$ROOT/benchmarks" slurm/transform-SEv1-k2-OH.sh >/dev/null 2>&1; then
-  ok "transform scripts default to local benchmarks"
+if grep -R "\$ROOT/transform/results/k_2-OH-SEv1" maxhs/jobs/solve-MaxHS-SEv1-k2-OH.sh >/dev/null 2>&1; then
+  ok "MaxSAT solve scripts read shared transform/results"
 else
-  fail "transform scripts do not default to local benchmarks"
+  fail "MaxSAT solve scripts do not read shared transform/results"
 fi
 
 section "9. Shell Syntax"
@@ -215,7 +249,7 @@ if [[ "$ERRORS" -eq 0 ]]; then
   echo "[READY] fatal checks passed with $WARNINGS warning(s)."
   echo "Next steps:"
   echo "  1. Install/configure warned solver dependencies if needed."
-  echo "  2. Submit transforms first:  cd slurm && bash submit_transforms.sh"
+  echo "  2. Submit transforms first:  bash submit_transforms.sh"
   echo "  3. After transforms finish: bash submit_solves.sh"
   echo "  4. Baselines can run anytime: bash submit_baselines.sh"
   exit 0

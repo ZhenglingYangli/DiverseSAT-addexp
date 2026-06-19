@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # Best-effort helper for preparing external MaxSAT solvers.
 #
+# IMPORTANT: if the compute server can ONLY pull this new-exps repo (no general
+# internet access), this script's download/build steps will NOT work there.
+# In that case the binaries must ship INSIDE the repo:
+#   - maxhs and wmaxcdcl are already bundled (Git LFS) under solvers/MaxSAT/.
+#   - CASH must be committed into solvers/MaxSAT/cashwmaxsat-disjcom before the
+#     server pulls the repo, or transferred onto the server by another channel.
+# Run this script only on a machine that DOES have internet access.
+#
 # This script is intentionally conservative:
 # - WMaxCDCL has a public MaxSAT Evaluation source zip and can usually be built.
 # - MaxHS is public but needs IBM CPLEX C/C++ libraries; build only when paths are set.

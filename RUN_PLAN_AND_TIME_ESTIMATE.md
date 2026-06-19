@@ -33,7 +33,6 @@ So the full matrix expands to:
 2. Submit transform jobs first:
 
    ```bash
-   cd slurm
    bash submit_transforms.sh
    ```
 
@@ -52,7 +51,6 @@ So the full matrix expands to:
 5. Aggregate:
 
    ```bash
-   cd ..
    ./run_all_experiments.sh sumup
    ```
 

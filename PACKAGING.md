@@ -31,12 +31,13 @@ python3 -m pip install -r requirements.txt
 ## Included
 
 - all experiment Python code
-- SLURM generator and generated staged submit scripts
+- SLURM generator and generated staged submit scripts under solver-oriented
+  `jobs/` directories
 - 289 benchmark CNF files in `benchmarks/` (Git LFS when distributed through GitHub)
 - 289-instance manifest in `instances/289_instances.txt`
 - baseline scripts using PySAT `Cadical195` and RC2
 - local self tests
-- sumup script
+- shared sumup parser plus thin per-solver sumup wrappers
 - best-effort solver setup helper: `setup_solvers.sh`
 - `.gitignore` that keeps source/CNF/SLURM scripts but excludes generated WCNF,
   results, logs, caches, and local archives

@@ -14,7 +14,9 @@ from pysat.formula import CNF
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-transformer_path = ROOT / "transformers/cnf_to_wcnf.py"
+from common.dimacs import load_cnf
+
+transformer_path = ROOT / "transform/transformers/cnf_to_wcnf.py"
 spec = importlib.util.spec_from_file_location("new_exps_cnf_to_wcnf", transformer_path)
 assert spec and spec.loader
 transformer_module = importlib.util.module_from_spec(spec)
@@ -48,6 +50,16 @@ def test_transformer_writes_file() -> None:
         assert "0\n" in text
 
 
+def test_dimacs_header_free_variables_are_preserved() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        cnf_path = Path(tmp) / "free.cnf"
+        cnf_path.write_text("p cnf 2 1\n1 0\n")
+        cnf = load_cnf(cnf_path)
+        assert cnf.nv == 2
+        _, _, _, sev1_count = compile_wcnf(cnf, 2, "OH", "SEv1")
+        assert sev1_count == 13
+
+
 def test_cplex_module_syntax_if_available() -> None:
     try:
         import cplex  # noqa: F401
@@ -56,7 +68,7 @@ def test_cplex_module_syntax_if_available() -> None:
         return
     import importlib.util
 
-    module_path = ROOT / "cplex/cplex_diversesat.py"
+    module_path = ROOT / "cplex/solvers/cplex_diversesat.py"
     spec = importlib.util.spec_from_file_location("new_exps_cplex_diversesat", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -70,7 +82,7 @@ def test_cplex_tiny_all_encodings_if_available() -> None:
         print("[skip] cplex package not available")
         return
 
-    cplex_solver = ROOT / "cplex/cplex_diversesat.py"
+    cplex_solver = ROOT / "cplex/solvers/cplex_diversesat.py"
     with tempfile.TemporaryDirectory() as tmp:
         cnf_path = Path(tmp) / "tiny.cnf"
         cnf_path.write_text("p cnf 2 1\n1 2 0\n")
@@ -94,14 +106,14 @@ def test_cplex_tiny_all_encodings_if_available() -> None:
                     timeout=30,
                 )
                 assert proc.returncode == 0, proc.stdout
-                assert "@@@ MIP_optimal" in proc.stdout, proc.stdout
+                assert "@@@ optimal" in proc.stdout, proc.stdout
                 assert "OPT 2" in proc.stdout, proc.stdout
 
 
 def test_sumup_parses_qp_encoding() -> None:
     import csv
 
-    sumup_path = ROOT / "sumup/sumup_results.py"
+    sumup_path = ROOT / "common/sumup_common.py"
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
         result_dir = base / "results/CPLEX-QP-k2-SEv1"
@@ -128,7 +140,7 @@ def test_sumup_parses_qp_encoding() -> None:
 def test_sumup_status_semantics() -> None:
     import csv
 
-    sumup_path = ROOT / "sumup/sumup_results.py"
+    sumup_path = ROOT / "common/sumup_common.py"
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
         bench_dir = base / "benchmarks"
@@ -179,7 +191,7 @@ def test_sumup_status_semantics() -> None:
 def test_sumup_converts_maxsat_cost_to_diversity() -> None:
     import csv
 
-    sumup_path = ROOT / "sumup/sumup_results.py"
+    sumup_path = ROOT / "common/sumup_common.py"
     raw_costs = {"OH": 0, "UNA": 0, "BIN": 10}
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
@@ -213,14 +225,49 @@ def test_sumup_converts_maxsat_cost_to_diversity() -> None:
             assert rows[0]["BEST"] == "2", (encoding, rows[0])
 
 
+def test_baselines_respect_distinctness_with_free_variables() -> None:
+    baselines = [
+        ROOT / "cadical/solvers/cadical_enumerate.py",
+        ROOT / "cadical_greedy/solvers/cadical_greedy.py",
+    ]
+    with tempfile.TemporaryDirectory() as tmp:
+        cnf_path = Path(tmp) / "free.cnf"
+        cnf_path.write_text("p cnf 2 1\n1 0\n")
+        for baseline in baselines:
+            completed = subprocess.run(
+                [sys.executable, str(baseline), str(cnf_path), "2"],
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=30,
+            )
+            assert completed.returncode == 0, completed.stdout
+            assert "@@@ completed" in completed.stdout, completed.stdout
+            assert "OPT 1" in completed.stdout, completed.stdout
+
+            incomplete = subprocess.run(
+                [sys.executable, str(baseline), str(cnf_path), "3"],
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=30,
+            )
+            assert incomplete.returncode == 0, incomplete.stdout
+            assert "@@@ incomplete" in incomplete.stdout, incomplete.stdout
+
+
 def main() -> None:
     test_strict_se_counts()
     test_transformer_writes_file()
+    test_dimacs_header_free_variables_are_preserved()
     test_cplex_module_syntax_if_available()
     test_cplex_tiny_all_encodings_if_available()
     test_sumup_parses_qp_encoding()
     test_sumup_status_semantics()
     test_sumup_converts_maxsat_cost_to_diversity()
+    test_baselines_respect_distinctness_with_free_variables()
     print("[ok] new-exps local self tests passed")
 
 

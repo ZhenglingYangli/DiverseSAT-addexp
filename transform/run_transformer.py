@@ -25,7 +25,7 @@ def main() -> None:
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]
-    transformer = root / "transformers/cnf_to_wcnf.py"
+    transformer = root / "transform/transformers/cnf_to_wcnf.py"
     bench_dir = Path(args.bench_dir)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

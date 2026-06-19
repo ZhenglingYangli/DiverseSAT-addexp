@@ -47,23 +47,28 @@ git lfs pull
 ./run_all_experiments.sh generate
 
 # on the cluster: submit in stages
-cd slurm
 bash submit_transforms.sh
 # wait until transform arrays finish
 bash submit_solves.sh
 bash submit_baselines.sh
 
 # after jobs finish
-cd ..
 ./run_all_experiments.sh sumup
 ```
 
 ## Outputs
 
-- transformed WCNF: `benchmarks/k_<K>-<ENC>-<SE>/`
-- raw logs: `results/<solver>-<encoding>-k<K>-<SE>/`
-- summary CSV: `sumup/results/`
-- SLURM scripts: `slurm/`
+- transformed WCNF: `transform/results/k_<K>-<ENC>-<SE>/`
+- raw logs: `<solver>/results/<solver>-<encoding>-k<K>-<SE>/`
+- summary CSV: `<solver>/sumup/results/`
+- SLURM scripts: `transform/jobs/` and `<solver>/jobs/`
+
+## Solver-Oriented Layout
+
+The rerun package follows the `experiment-1` style organization: CPLEX, MaxSAT
+solvers, and baselines each own their `jobs/`, `sumup/`, and `results/`
+directories. The MaxSAT CNF-to-WCNF transform remains shared under `transform/`
+because `CASH`, `MaxHS`, and `WMaxCDCL` all consume the same WCNF instances.
 
 ## Notes
 

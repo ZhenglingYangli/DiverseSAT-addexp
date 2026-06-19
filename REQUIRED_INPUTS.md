@@ -107,11 +107,28 @@ python3 check_server_ready.py
 Then inspect:
 
 ```bash
-ls slurm | wc -l
+python3 - <<'PY'
+from pathlib import Path
+roots = [
+    Path("transform/jobs"),
+    Path("cplex/jobs"),
+    Path("cash/jobs"),
+    Path("maxhs/jobs"),
+    Path("wmaxcdcl/jobs"),
+    Path("cadical/jobs"),
+    Path("cadical_greedy/jobs"),
+]
+jobs = [
+    p
+    for root in roots
+    for p in root.glob("*.sh")
+    if p.name.startswith(("transform-", "solve-", "baseline-"))
+]
+print(len(jobs))
+PY
 ```
 
-Expected: 174 shell files (`170` array job scripts plus `submit_transforms.sh`,
-`submit_solves.sh`, `submit_baselines.sh`, and a guarded `submit_all.sh`). Each
-job script uses `#SBATCH --array=1-289`, so the full matrix expands to 49,130
-array tasks.
+Expected: `170` array job scripts distributed across `transform/jobs/` and the
+six solver `jobs/` directories. Each job script uses `#SBATCH --array=1-289`, so
+the full matrix expands to 49,130 array tasks.
 
