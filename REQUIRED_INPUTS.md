@@ -60,6 +60,28 @@ solvers/MaxSAT/maxhs
 solvers/MaxSAT/wmaxcdcl
 ```
 
+You can try the helper script:
+
+```bash
+./setup_solvers.sh all
+```
+
+It can usually download/build `WMaxCDCL` automatically. `MaxHS` requires IBM
+CPLEX C/C++ library and include paths:
+
+```bash
+export LINUX_CPLEXLIBDIR=/path/to/cplex/lib/x86-64_linux/static_pic
+export LINUX_CPLEXINCDIR=/path/to/cplex/include
+./setup_solvers.sh maxhs
+```
+
+For `CASH`, provide a binary explicitly:
+
+```bash
+export CASH_BIN=/path/to/cashwmaxsat-disjcom
+./setup_solvers.sh cash
+```
+
 ## SLURM
 
 The generated scripts assume:

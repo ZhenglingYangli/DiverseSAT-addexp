@@ -14,6 +14,7 @@ git clone git@github.com:ZhenglingYangli/DiverseSAT-addexp.git
 cd DiverseSAT-addexp
 git lfs pull
 python3 -m pip install -r requirements.txt
+./setup_solvers.sh all
 ./server_preflight.sh
 ```
 
@@ -36,6 +37,7 @@ python3 -m pip install -r requirements.txt
 - baseline scripts using PySAT `Cadical195` and RC2
 - local self tests
 - sumup script
+- best-effort solver setup helper: `setup_solvers.sh`
 - `.gitignore` that keeps source/CNF/SLURM scripts but excludes generated WCNF,
   results, logs, caches, and local archives
 

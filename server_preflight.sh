@@ -57,6 +57,7 @@ for path in \
   check_server_ready.py \
   generate_slurm.py \
   run_all_experiments.sh \
+  setup_solvers.sh \
   instances/289_instances.txt \
   requirements.txt
 do

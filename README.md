@@ -40,6 +40,9 @@ git lfs pull
 # local smoke tests and self-contained data check
 ./server_preflight.sh
 
+# optional: prepare external MaxSAT solvers
+./setup_solvers.sh all
+
 # generate all SLURM scripts
 ./run_all_experiments.sh generate
 
@@ -74,4 +77,19 @@ XOR/GaussMaxHS is not part of this clean main rerun matrix. The previous XOR
 experiment can remain a historical negative exploration. If XOR is needed as a
 strict-formulation comparison, it should be added later with the same explicit
 `SE-5` distinctness rule.
+
+## Solver Setup Helper
+
+`setup_solvers.sh` is a best-effort helper for external MaxSAT solvers:
+
+- `./setup_solvers.sh wmaxcdcl` downloads and builds WMaxCDCL from the MaxSAT
+  Evaluation 2023 source package.
+- `./setup_solvers.sh maxhs` clones MaxHS. It builds only when
+  `LINUX_CPLEXLIBDIR` and `LINUX_CPLEXINCDIR` point to IBM CPLEX C/C++
+  libraries and headers.
+- `./setup_solvers.sh cash` copies `CASH_BIN` into `solvers/MaxSAT/` if that
+  environment variable points to an existing executable. Otherwise it prints the
+  required target path.
+
+After using it, rerun `./server_preflight.sh`.
 
