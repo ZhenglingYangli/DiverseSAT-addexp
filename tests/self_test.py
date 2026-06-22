@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import tempfile
+import os
 from pathlib import Path
 import sys
 import importlib.util
@@ -12,11 +13,13 @@ import subprocess
 from pysat.formula import CNF
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+CODE_ROOT = ROOT / "codes/SEv1"
+PY_ENV = {**os.environ, "PYTHONPATH": f"{CODE_ROOT}{os.pathsep}{os.environ.get('PYTHONPATH', '')}"}
+sys.path.insert(0, str(CODE_ROOT))
 
 from common.dimacs import load_cnf
 
-transformer_path = ROOT / "transform/transformers/cnf_to_wcnf.py"
+transformer_path = CODE_ROOT / "transform/cnf_to_wcnf.py"
 spec = importlib.util.spec_from_file_location("new_exps_cnf_to_wcnf", transformer_path)
 assert spec and spec.loader
 transformer_module = importlib.util.module_from_spec(spec)
@@ -68,7 +71,7 @@ def test_cplex_module_syntax_if_available() -> None:
         return
     import importlib.util
 
-    module_path = ROOT / "cplex/solvers/cplex_diversesat.py"
+    module_path = CODE_ROOT / "cplex/cplex_diversesat.py"
     spec = importlib.util.spec_from_file_location("new_exps_cplex_diversesat", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -82,7 +85,7 @@ def test_cplex_tiny_all_encodings_if_available() -> None:
         print("[skip] cplex package not available")
         return
 
-    cplex_solver = ROOT / "cplex/solvers/cplex_diversesat.py"
+    cplex_solver = CODE_ROOT / "cplex/cplex_diversesat.py"
     with tempfile.TemporaryDirectory() as tmp:
         cnf_path = Path(tmp) / "tiny.cnf"
         cnf_path.write_text("p cnf 2 1\n1 2 0\n")
@@ -104,6 +107,7 @@ def test_cplex_tiny_all_encodings_if_available() -> None:
                     stderr=subprocess.STDOUT,
                     text=True,
                     timeout=30,
+                    env=PY_ENV,
                 )
                 assert proc.returncode == 0, proc.stdout
                 assert "@@@ optimal" in proc.stdout, proc.stdout
@@ -113,7 +117,7 @@ def test_cplex_tiny_all_encodings_if_available() -> None:
 def test_sumup_parses_qp_encoding() -> None:
     import csv
 
-    sumup_path = ROOT / "common/sumup_common.py"
+    sumup_path = ROOT / "sumup/_common/sumup_common.py"
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
         result_dir = base / "results/CPLEX-QP-k2-SEv1"
@@ -140,7 +144,7 @@ def test_sumup_parses_qp_encoding() -> None:
 def test_sumup_status_semantics() -> None:
     import csv
 
-    sumup_path = ROOT / "common/sumup_common.py"
+    sumup_path = ROOT / "sumup/_common/sumup_common.py"
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
         bench_dir = base / "benchmarks"
@@ -191,7 +195,7 @@ def test_sumup_status_semantics() -> None:
 def test_sumup_converts_maxsat_cost_to_diversity() -> None:
     import csv
 
-    sumup_path = ROOT / "common/sumup_common.py"
+    sumup_path = ROOT / "sumup/_common/sumup_common.py"
     raw_costs = {"OH": 0, "UNA": 0, "BIN": 10}
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
@@ -227,8 +231,8 @@ def test_sumup_converts_maxsat_cost_to_diversity() -> None:
 
 def test_baselines_respect_distinctness_with_free_variables() -> None:
     baselines = [
-        ROOT / "cadical/solvers/cadical_enumerate.py",
-        ROOT / "cadical_greedy/solvers/cadical_greedy.py",
+        CODE_ROOT / "cadical/cadical_enumerate.py",
+        CODE_ROOT / "cadical_greedy/cadical_greedy.py",
     ]
     with tempfile.TemporaryDirectory() as tmp:
         cnf_path = Path(tmp) / "free.cnf"
@@ -241,6 +245,7 @@ def test_baselines_respect_distinctness_with_free_variables() -> None:
                 stderr=subprocess.STDOUT,
                 text=True,
                 timeout=30,
+                env=PY_ENV,
             )
             assert completed.returncode == 0, completed.stdout
             assert "@@@ completed" in completed.stdout, completed.stdout
@@ -253,6 +258,7 @@ def test_baselines_respect_distinctness_with_free_variables() -> None:
                 stderr=subprocess.STDOUT,
                 text=True,
                 timeout=30,
+                env=PY_ENV,
             )
             assert incomplete.returncode == 0, incomplete.stdout
             assert "@@@ incomplete" in incomplete.stdout, incomplete.stdout

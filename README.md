@@ -1,100 +1,73 @@
-# Clean Rerun Experiments for DiverseSAT Journal Version
+# DiverseSAT Strict-SE Rerun
 
-This directory is a fresh rerun package. It does not continue the historical
-`exp1`--`exp7` naming. The goal is to rerun the journal matrix with one
-consistent semantics:
+This is the clean rerun package for the journal experiments. The repository is
+code-only: it does not include benchmark CNFs, solver binaries, or Git LFS
+objects.
 
-- `SEv1`: strict lexicographic SE with explicit `SE-4` and `SE-5`.
-- `SEv3`: diagonal dominance plus explicit pairwise distinctness.
-- cutoff: `7200s`.
-- benchmark list: `instances/289_instances.txt`.
+## One Command
+
+On the original SLURM cluster:
+
+```bash
+cd new-exps
+python3 -m pip install -r requirements.txt
+bash run_cluster_pipeline.sh
+```
+
+`run_cluster_pipeline.sh` checks the real cluster environment, runs local tests,
+generates SLURM jobs, submits the full experiment matrix, and automatically
+submits the final sumup job after the solver jobs finish.
+
+Default external paths are built into the script:
+
+```text
+BENCH_DIR=/users/scherif/ComputeSpace/DiverseSAT/benchmarks
+CASH_BIN=/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/cashwmaxsat-disjcom
+MAXHS_BIN=/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/maxhs
+WMAXCDCL_BIN=/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/wmaxcdcl
+INSTANCE_LIST=new-exps/codes/289_instances.txt
+```
+
+If a path differs, export it before running the script, for example:
+
+```bash
+export BENCH_DIR=/path/to/benchmarks
+bash run_cluster_pipeline.sh
+```
 
 ## Experiment Matrix
 
-| block | solver | encodings | k |
-|---|---|---|---|
-| Baseline | CaDiCaL | original CNF | 2, 3, 4, 5, 10 |
-| Baseline | CaDiCaL-Greedy | original CNF | 2, 3, 4, 5, 10 |
-| Exact | CPLEX | QP, OH, UNA, BIN | 2, 3, 4, 5, 10 |
-| Exact | CASH | OH, UNA, BIN | 2, 3, 4, 5, 10 |
-| Exact | MaxHS | OH, UNA, BIN | 2, 3, 4, 5, 10 |
-| Exact | WMaxCDCL | OH, UNA, BIN | 2, 3, 4, 5, 10 |
+- SE modes: strict `SEv1` with explicit `SE-4/SE-5`, and strict `SEv3` with explicit pairwise distinctness.
+- Cutoff: `7200s`.
+- k values: `2, 3, 4, 5, 10`.
+- Exact solvers: `CPLEX` with `QP/OH/UNA/BIN`; `CASH`, `MaxHS`, `WMaxCDCL` with `OH/UNA/BIN`.
+- Baselines: `CaDiCaL` and `CaDiCaL-Greedy`.
+- Generated matrix: 170 SLURM array scripts, 49,130 array tasks.
 
-The exact blocks are run for both `SEv1` and `SEv3`.
+## Layout
 
-## Why This Exists
+- `codes/`: source code and the 289-instance manifest.
+- `jobs/generate_slurm.py`: creates all runtime job scripts under `jobs/`.
+- `jobs/`: generated at runtime by the pipeline.
+- `results/`: raw solver logs and transformed WCNF files.
+- `sumup/`: per-SE and combined CSV summaries.
 
-The old `added_experiment` SEv1 scripts used a historical non-strict lex chain:
-`SE-1/2/3`, without explicit `SE-4` and without `SE-5` distinctness. That is not
-the same as the strict journal formulation. This package fixes that at the
-encoding level instead of only re-summarizing old logs.
+Expected final output:
 
-## Quick Start
-
-```bash
-git lfs install
-git clone git@github.com:ZhenglingYangli/DiverseSAT-addexp.git
-cd DiverseSAT-addexp
-git lfs pull
-
-# local smoke tests and self-contained data check
-./server_preflight.sh
-
-# optional: prepare external MaxSAT solvers
-./setup_solvers.sh all
-
-# generate all SLURM scripts
-./run_all_experiments.sh generate
-
-# on the cluster: submit in stages
-bash submit_transforms.sh
-# wait until transform arrays finish
-bash submit_solves.sh
-bash submit_baselines.sh
-
-# after jobs finish
-./run_all_experiments.sh sumup
+```text
+sumup/SEv1/results/
+sumup/SEv3/results/
+sumup/baseline/results/
+sumup/combined/results/all_results.csv
 ```
 
-## Outputs
+## Runtime Estimate
 
-- transformed WCNF: `transform/results/k_<K>-<ENC>-<SE>/`
-- raw logs: `<solver>/results/<solver>-<encoding>-k<K>-<SE>/`
-- summary CSV: `<solver>/sumup/results/`
-- SLURM scripts: `transform/jobs/` and `<solver>/jobs/`
+The wall time depends mainly on SLURM array concurrency after the jobs leave the
+queue. Approximate total time:
 
-## Solver-Oriented Layout
-
-The rerun package follows the `experiment-1` style organization: CPLEX, MaxSAT
-solvers, and baselines each own their `jobs/`, `sumup/`, and `results/`
-directories. The MaxSAT CNF-to-WCNF transform remains shared under `transform/`
-because `CASH`, `MaxHS`, and `WMaxCDCL` all consume the same WCNF instances.
-
-## Notes
-
-The 289 CNF benchmark files are stored under `benchmarks/` and tracked with
-Git LFS because the largest instance exceeds GitHub's regular file-size limit.
-On a fresh server, install Git LFS before cloning or run `git lfs pull` after
-cloning. Once LFS files are present, the server only needs this repository plus
-solver installations/licenses.
-
-XOR/GaussMaxHS is not part of this clean main rerun matrix. The previous XOR
-experiment can remain a historical negative exploration. If XOR is needed as a
-strict-formulation comparison, it should be added later with the same explicit
-`SE-5` distinctness rule.
-
-## Solver Setup Helper
-
-`setup_solvers.sh` is a best-effort helper for external MaxSAT solvers:
-
-- `./setup_solvers.sh wmaxcdcl` downloads and builds WMaxCDCL from the MaxSAT
-  Evaluation 2023 source package.
-- `./setup_solvers.sh maxhs` clones MaxHS. It builds only when
-  `LINUX_CPLEXLIBDIR` and `LINUX_CPLEXINCDIR` point to IBM CPLEX C/C++
-  libraries and headers.
-- `./setup_solvers.sh cash` copies `CASH_BIN` into `solvers/MaxSAT/` if that
-  environment variable points to an existing executable. Otherwise it prints the
-  required target path.
-
-After using it, rerun `./server_preflight.sh`.
+- 500 concurrent tasks: 9-13 days.
+- 1,000 concurrent tasks: 5-8 days.
+- 2,000 concurrent tasks: 3-5 days.
+- 5,000+ concurrent tasks: 1.5-3 days.
 

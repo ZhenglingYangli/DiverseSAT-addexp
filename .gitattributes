@@ -1,4 +1,0 @@
-benchmarks/*.cnf filter=lfs diff=lfs merge=lfs -text
-solvers/MaxSAT/maxhs filter=lfs diff=lfs merge=lfs -text
-solvers/MaxSAT/wmaxcdcl filter=lfs diff=lfs merge=lfs -text
-solvers/MaxSAT/cashwmaxsat-disjcom filter=lfs diff=lfs merge=lfs -text

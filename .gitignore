@@ -1,7 +1,18 @@
 # Generated experiment outputs
+/jobs/SEv1/
+/jobs/SEv3/
+/jobs/baseline/
+/jobs/sumup/
 /results/
-/sumup/results/
-/benchmarks/k_*/
+!/results/.gitkeep
+!/results/SEv1/
+!/results/SEv1/.gitkeep
+!/results/SEv3/
+!/results/SEv3/.gitkeep
+!/results/baseline/
+!/results/baseline/.gitkeep
+/sumup/*/results/
+/pipeline-submissions-*.tsv
 
 # SLURM runtime logs
 /slurm/slurm-*.out
