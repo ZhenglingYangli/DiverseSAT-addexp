@@ -36,12 +36,16 @@ def check_python_module(name: str) -> bool:
     return True
 
 
+def resolve_default_path(path: str) -> Path:
+    return Path(path.replace("$ROOT", str(ROOT)))
+
+
 def check_executable(label: str, env_name: str, default_path: str) -> bool:
-    path = Path(os.environ.get(env_name, default_path))
+    path = Path(os.environ[env_name]) if env_name in os.environ else resolve_default_path(default_path)
     if path.exists() and os.access(path, os.X_OK):
         ok(f"{label}: {path}")
         return True
-    warn(f"{label} executable not found: set {env_name} or check default path {default_path}")
+    warn(f"{label} executable not found: set {env_name} or check default path {path}")
     return False
 
 

@@ -6,14 +6,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 cd "$ROOT"
 
-# Defaults are the original cluster resource paths. Override with environment
-# variables if a collaborator's account uses different mount points.
-export BENCH_DIR="${BENCH_DIR:-/users/scherif/ComputeSpace/DiverseSAT/benchmarks}"
-export CASH_BIN="${CASH_BIN:-/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/cashwmaxsat-disjcom}"
-export MAXHS_BIN="${MAXHS_BIN:-/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/maxhs}"
-export WMAXCDCL_BIN="${WMAXCDCL_BIN:-/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/wmaxcdcl}"
-export INSTANCE_LIST="${INSTANCE_LIST:-$ROOT/codes/289_instances.txt}"
-
 timestamp() {
   date +"%Y%m%d-%H%M%S"
 }
@@ -26,6 +18,45 @@ die() {
   echo "[ERROR] $*" >&2
   exit 1
 }
+
+pick_executable() {
+  local env_name="$1"
+  shift
+  local candidate
+
+  if [[ -n "${!env_name:-}" ]]; then
+    echo "${!env_name}"
+    return
+  fi
+
+  for candidate in "$@"; do
+    if [[ -x "$candidate" ]]; then
+      echo "$candidate"
+      return
+    fi
+  done
+
+  # Return the first path so the preflight error is concrete and actionable.
+  echo "$1"
+}
+
+# MaxSAT solvers use the same relative location as added_experiment:
+#   <experiment-root>/solvers/MaxSAT/{cashwmaxsat-disjcom,maxhs,wmaxcdcl}
+# Override with CASH_BIN/MAXHS_BIN/WMAXCDCL_BIN if needed.
+export BENCH_DIR="${BENCH_DIR:-/users/scherif/ComputeSpace/DiverseSAT/benchmarks}"
+export CASH_BIN="$(pick_executable CASH_BIN \
+  "$ROOT/../solvers/MaxSAT/cashwmaxsat-disjcom" \
+  "$ROOT/../added_experiment/solvers/MaxSAT/cashwmaxsat-disjcom" \
+  "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/cashwmaxsat-disjcom")"
+export MAXHS_BIN="$(pick_executable MAXHS_BIN \
+  "$ROOT/../solvers/MaxSAT/maxhs" \
+  "$ROOT/../added_experiment/solvers/MaxSAT/maxhs" \
+  "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/maxhs")"
+export WMAXCDCL_BIN="$(pick_executable WMAXCDCL_BIN \
+  "$ROOT/../solvers/MaxSAT/wmaxcdcl" \
+  "$ROOT/../added_experiment/solvers/MaxSAT/wmaxcdcl" \
+  "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/wmaxcdcl")"
+export INSTANCE_LIST="${INSTANCE_LIST:-$ROOT/codes/289_instances.txt}"
 
 join_by_colon() {
   local IFS=:
@@ -52,7 +83,9 @@ submit_array_group() {
   log "Submitting $label (${#scripts[@]} array scripts)"
   for script in "${scripts[@]}"; do
     [[ -f "$script" ]] || die "missing script: $script"
-    id="$(sbatch --parsable "${dep_args[@]}" "$script")"
+    id="$(sbatch --parsable \
+      --export=ALL,BENCH_DIR="$BENCH_DIR",CASH_BIN="$CASH_BIN",MAXHS_BIN="$MAXHS_BIN",WMAXCDCL_BIN="$WMAXCDCL_BIN",INSTANCE_LIST="$INSTANCE_LIST" \
+      "${dep_args[@]}" "$script")"
     id="${id%%;*}"
     ids+=("$id")
     echo "$label $id $script" >> "$SUBMISSION_LOG"

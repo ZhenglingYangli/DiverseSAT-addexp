@@ -18,13 +18,14 @@ bash run_cluster_pipeline.sh
 generates SLURM jobs, submits the full experiment matrix, and automatically
 submits the final sumup job after the solver jobs finish.
 
-Default external paths are built into the script:
+Default external paths are built into the script. MaxSAT solvers use the same
+location as the old `added_experiment` runs:
 
 ```text
 BENCH_DIR=/users/scherif/ComputeSpace/DiverseSAT/benchmarks
-CASH_BIN=/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/cashwmaxsat-disjcom
-MAXHS_BIN=/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/maxhs
-WMAXCDCL_BIN=/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/wmaxcdcl
+CASH_BIN=../solvers/MaxSAT/cashwmaxsat-disjcom
+MAXHS_BIN=../solvers/MaxSAT/maxhs
+WMAXCDCL_BIN=../solvers/MaxSAT/wmaxcdcl
 INSTANCE_LIST=new-exps/codes/289_instances.txt
 ```
 
@@ -32,6 +33,9 @@ If a path differs, export it before running the script, for example:
 
 ```bash
 export BENCH_DIR=/path/to/benchmarks
+export CASH_BIN=/path/to/cashwmaxsat-disjcom
+export MAXHS_BIN=/path/to/maxhs
+export WMAXCDCL_BIN=/path/to/wmaxcdcl
 bash run_cluster_pipeline.sh
 ```
 
