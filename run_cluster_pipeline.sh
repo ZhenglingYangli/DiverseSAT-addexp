@@ -40,21 +40,21 @@ pick_executable() {
   echo "$1"
 }
 
-# MaxSAT solvers use the same relative location as added_experiment:
-#   <experiment-root>/solvers/MaxSAT/{cashwmaxsat-disjcom,maxhs,wmaxcdcl}
+# MaxSAT solvers use the old added_experiment solver directory. On the cluster,
+# added_experiment/ and new-exps/ are expected to be sibling directories.
 # Override with CASH_BIN/MAXHS_BIN/WMAXCDCL_BIN if needed.
 export BENCH_DIR="${BENCH_DIR:-/users/scherif/ComputeSpace/DiverseSAT/benchmarks}"
 export CASH_BIN="$(pick_executable CASH_BIN \
-  "$ROOT/../solvers/MaxSAT/cashwmaxsat-disjcom" \
   "$ROOT/../added_experiment/solvers/MaxSAT/cashwmaxsat-disjcom" \
+  "$ROOT/../solvers/MaxSAT/cashwmaxsat-disjcom" \
   "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/cashwmaxsat-disjcom")"
 export MAXHS_BIN="$(pick_executable MAXHS_BIN \
-  "$ROOT/../solvers/MaxSAT/maxhs" \
   "$ROOT/../added_experiment/solvers/MaxSAT/maxhs" \
+  "$ROOT/../solvers/MaxSAT/maxhs" \
   "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/maxhs")"
 export WMAXCDCL_BIN="$(pick_executable WMAXCDCL_BIN \
-  "$ROOT/../solvers/MaxSAT/wmaxcdcl" \
   "$ROOT/../added_experiment/solvers/MaxSAT/wmaxcdcl" \
+  "$ROOT/../solvers/MaxSAT/wmaxcdcl" \
   "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/wmaxcdcl")"
 export INSTANCE_LIST="${INSTANCE_LIST:-$ROOT/codes/289_instances.txt}"
 
