@@ -264,6 +264,63 @@ def test_baselines_respect_distinctness_with_free_variables() -> None:
             assert "@@@ incomplete" in incomplete.stdout, incomplete.stdout
 
 
+def test_external_solver_runs_in_isolated_workdir() -> None:
+    runner = CODE_ROOT / "cash/run_solver.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        input_dir = base / "inputs"
+        out_dir = base / "out"
+        input_dir.mkdir()
+        out_dir.mkdir()
+        wcnf = input_dir / "tiny.wcnf"
+        wcnf.write_text("p wcnf 1 0 2\n")
+        instance_list = base / "instances.txt"
+        instance_list.write_text("tiny.cnf\n")
+        proxy = base / "fake_cash_proxy.sh"
+        proxy.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "touch output_${SLURM_JOB_ID:-local}_tiny.out\n"
+            "touch output_${SLURM_JOB_ID:-local}_tiny.var\n"
+            "touch output_${SLURM_JOB_ID:-local}_tiny.wat\n"
+            "touch maxsat.wcnf\n"
+            "echo 's OPTIMUM FOUND'\n"
+            "echo 'o 0'\n"
+        )
+        proxy.chmod(0o755)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(runner),
+                "--solver",
+                "CASH",
+                "--solver-bin",
+                str(proxy),
+                "--input-dir",
+                str(input_dir),
+                "--instance-list",
+                str(instance_list),
+                "--out-dir",
+                str(out_dir),
+                "--suffix",
+                ".wcnf",
+                "--timeout",
+                "10",
+            ],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=30,
+            env=PY_ENV,
+        )
+        assert proc.returncode == 0, proc.stdout
+        assert (out_dir / "tiny.wcnf.out").exists()
+        assert "s OPTIMUM FOUND" in (out_dir / "tiny.wcnf.out").read_text()
+        leftovers = list(out_dir.rglob("output_*")) + list(out_dir.rglob("maxsat.wcnf"))
+        assert leftovers == [], leftovers
+
+
 def main() -> None:
     test_strict_se_counts()
     test_transformer_writes_file()
@@ -274,6 +331,7 @@ def main() -> None:
     test_sumup_status_semantics()
     test_sumup_converts_maxsat_cost_to_diversity()
     test_baselines_respect_distinctness_with_free_variables()
+    test_external_solver_runs_in_isolated_workdir()
     print("[ok] new-exps local self tests passed")
 
 

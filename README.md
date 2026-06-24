@@ -56,6 +56,12 @@ bash run_cluster_pipeline.sh
 - `results/`: raw solver logs and transformed WCNF files.
 - `sumup/`: per-SE and combined CSV summaries.
 
+CASH may be a proxy script rather than a plain binary. The runner executes each
+external MaxSAT solver call in an isolated temporary work directory under the
+corresponding result folder, then cleans it up, so proxy-generated files such as
+`output_*`, `*.var`, `*.wat`, and `maxsat.wcnf` do not collide across array
+tasks.
+
 Expected final output:
 
 ```text

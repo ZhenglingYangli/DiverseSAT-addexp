@@ -7,11 +7,13 @@ import argparse
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+INTERNAL_SOLVERS = {"CPLEX", "CaDiCaL", "CaDiCaL-Greedy"}
 
 
 def solver_command(solver: str, solver_bin: str, input_path: Path, args: argparse.Namespace) -> list[str]:
@@ -21,7 +23,10 @@ def solver_command(solver: str, solver_bin: str, input_path: Path, args: argpars
         return [sys.executable, str(ROOT / "cadical/cadical_enumerate.py"), str(input_path), str(args.k)]
     if solver == "CaDiCaL-Greedy":
         return [sys.executable, str(ROOT / "cadical_greedy/cadical_greedy.py"), str(input_path), str(args.k)]
-    return [solver_bin, str(input_path)]
+    solver_path = Path(solver_bin).expanduser()
+    if solver_path.parent != Path(".") or solver_bin.startswith(("/", ".", "~")):
+        solver_bin = str(solver_path.resolve())
+    return [solver_bin, str(input_path.resolve())]
 
 
 def selected_inputs(input_dir: Path, instance_list: str | None, suffix: str) -> list[Path]:
@@ -59,8 +64,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--timeout", type=int, default=7200)
     args = parser.parse_args(argv)
 
-    input_dir = Path(args.input_dir)
-    out_dir = Path(args.out_dir)
+    input_dir = Path(args.input_dir).resolve()
+    out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     inputs = selected_inputs(input_dir, args.instance_list, args.suffix)
     if not inputs:
@@ -73,7 +78,25 @@ def main(argv: list[str] | None = None) -> None:
         start = time.time()
         with out_path.open("w") as out:
             try:
-                subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT, text=True, timeout=args.timeout, check=False)
+                if args.solver in INTERNAL_SOLVERS:
+                    subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT, text=True, timeout=args.timeout, check=False)
+                else:
+                    work_root = out_dir / "_work"
+                    work_root.mkdir(parents=True, exist_ok=True)
+                    with tempfile.TemporaryDirectory(prefix=f"{args.solver}-{path.stem}-", dir=work_root) as work_dir:
+                        subprocess.run(
+                            cmd,
+                            stdout=out,
+                            stderr=subprocess.STDOUT,
+                            text=True,
+                            timeout=args.timeout,
+                            check=False,
+                            cwd=work_dir,
+                        )
+                    try:
+                        work_root.rmdir()
+                    except OSError:
+                        pass
             except subprocess.TimeoutExpired:
                 out.write(f"@@@ timeout\n>>> Benchmark {path.name} TimeCost {time.time() - start}\n")
 
