@@ -23,7 +23,7 @@ the sibling `added_experiment` directory used by the old runs:
 
 ```text
 BENCH_DIR=/users/scherif/ComputeSpace/DiverseSAT/benchmarks
-CASH_BIN=../added_experiment/solvers/MaxSAT/cashwmaxsat-disjcom
+CASH_BIN=../added_experiment/solvers/MaxSAT/CASHWMaxSAT_DisjCom_noscip
 MAXHS_BIN=../added_experiment/solvers/MaxSAT/maxhs
 WMAXCDCL_BIN=../added_experiment/solvers/MaxSAT/wmaxcdcl
 INSTANCE_LIST=new-exps/codes/289_instances.txt
@@ -33,7 +33,7 @@ If a path differs, export it before running the script, for example:
 
 ```bash
 export BENCH_DIR=/path/to/benchmarks
-export CASH_BIN=/path/to/cashwmaxsat-disjcom
+export CASH_BIN=/path/to/CASHWMaxSAT_DisjCom_noscip
 export MAXHS_BIN=/path/to/maxhs
 export WMAXCDCL_BIN=/path/to/wmaxcdcl
 bash run_cluster_pipeline.sh

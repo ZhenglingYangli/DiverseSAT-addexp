@@ -29,7 +29,7 @@ MAXSAT_BIN_ENV = {
 }
 
 MAXSAT_DEFAULT_BINS = {
-    "CASH": "$ROOT/../added_experiment/solvers/MaxSAT/cashwmaxsat-disjcom",
+    "CASH": "$ROOT/../added_experiment/solvers/MaxSAT/CASHWMaxSAT_DisjCom_noscip",
     "MaxHS": "$ROOT/../added_experiment/solvers/MaxSAT/maxhs",
     "WMaxCDCL": "$ROOT/../added_experiment/solvers/MaxSAT/wmaxcdcl",
 }

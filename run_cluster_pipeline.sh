@@ -40,19 +40,65 @@ pick_executable() {
   echo "$1"
 }
 
+pick_named_executable() {
+  local env_name="$1"
+  local fallback="$2"
+  shift 2
+  local candidate
+  local root
+  local found
+  local name_pattern
+
+  if [[ -n "${!env_name:-}" ]]; then
+    echo "${!env_name}"
+    return
+  fi
+
+  for candidate in "$@"; do
+    if [[ -x "$candidate" ]]; then
+      echo "$candidate"
+      return
+    fi
+  done
+
+  name_pattern="$fallback"
+  if [[ "$fallback" == "CASHWMaxSAT_DisjCom_noscip" ]]; then
+    name_pattern="(${fallback}|cashwmaxsat-disjcom)"
+  fi
+
+  for root in "$ROOT/../added_experiment" "$ROOT/.." "/scratch/scherif/DiverseSAT-journal_sup" "/users/scherif/ComputeSpace/DiverseSAT"; do
+    [[ -d "$root" ]] || continue
+    found="$(
+      find "$root" -maxdepth 7 -type f \( -name "$fallback" -o -name "cashwmaxsat-disjcom" -o -name "CASHWMaxSAT_DisjCom_noscip" -o -name "maxhs" -o -name "wmaxcdcl" \) -perm /111 2>/dev/null \
+        | sort \
+        | grep -E "/${name_pattern}$" \
+        | head -n 1 || true
+    )"
+    if [[ -n "$found" ]]; then
+      echo "$found"
+      return
+    fi
+  done
+
+  echo "$1"
+}
+
 # MaxSAT solvers use the old added_experiment solver directory. On the cluster,
 # added_experiment/ and new-exps/ are expected to be sibling directories.
 # Override with CASH_BIN/MAXHS_BIN/WMAXCDCL_BIN if needed.
 export BENCH_DIR="${BENCH_DIR:-/users/scherif/ComputeSpace/DiverseSAT/benchmarks}"
-export CASH_BIN="$(pick_executable CASH_BIN \
+export CASH_BIN="$(pick_named_executable CASH_BIN "CASHWMaxSAT_DisjCom_noscip" \
+  "$ROOT/../added_experiment/solvers/MaxSAT/CASHWMaxSAT_DisjCom_noscip" \
   "$ROOT/../added_experiment/solvers/MaxSAT/cashwmaxsat-disjcom" \
+  "$ROOT/../solvers/MaxSAT/CASHWMaxSAT_DisjCom_noscip" \
   "$ROOT/../solvers/MaxSAT/cashwmaxsat-disjcom" \
+  "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/CASHWMaxSAT_DisjCom_noscip" \
   "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/cashwmaxsat-disjcom")"
-export MAXHS_BIN="$(pick_executable MAXHS_BIN \
+export MAXHS_BIN="$(pick_named_executable MAXHS_BIN "maxhs" \
   "$ROOT/../added_experiment/solvers/MaxSAT/maxhs" \
   "$ROOT/../solvers/MaxSAT/maxhs" \
   "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/maxhs")"
-export WMAXCDCL_BIN="$(pick_executable WMAXCDCL_BIN \
+export WMAXCDCL_BIN="$(pick_named_executable WMAXCDCL_BIN "wmaxcdcl" \
   "$ROOT/../added_experiment/solvers/MaxSAT/wmaxcdcl" \
   "$ROOT/../solvers/MaxSAT/wmaxcdcl" \
   "/users/scherif/ComputeSpace/DiverseSAT/solvers/MaxSAT/wmaxcdcl")"
